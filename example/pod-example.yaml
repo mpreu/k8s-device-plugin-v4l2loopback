@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: k8s-device-plugin-v4l2l-pod-example
+spec:
+  containers:
+  - name: k8s-device-plugin-v4l2l-pod-example
+    image: alpine:latest
+    workingDir: /dev
+    command: ["/bin/sh", "-c", "ls"]

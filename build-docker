@@ -1,0 +1,3 @@
+#/bin/bash
+
+docker build -t matthiaspreu/k8s-device-plugin-v4l2loopback:latest .

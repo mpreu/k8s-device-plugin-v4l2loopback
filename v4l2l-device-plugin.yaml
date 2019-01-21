@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: k8s-device-plugin-v4l2l
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      name: k8s-device-plugin-v4l2l
+  template:
+    metadata:
+      # This pod is marked as critical. Kubernetes will try to rescedule the pod
+      # if there is a failure, even if other pods have to be evicted for that.
+      # This notion is deprecated since Kubernetes 1.10 (and will be removed in 1.12).
+      # To prevent eviction of critical pods pod priorities and preemption has to be used.
+      # This annotation works in tandem with the toleration below.
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ""
+      labels:
+        name: k8s-device-plugin-v4l2l
+    spec:
+      tolerations:
+      # Allow this pod to be rescheduled while the node is in "critical add-ons only" mode.
+      # This, along with the annotation above marks this pod as a critical add-on.
+      - key: CriticalAddonsOnly
+        operator: Exists
+      containers:
+      - image: matthiaspreu/k8s-device-plugin-v4l2loopback:latest
+        name: k8s-device-plugin-v4l2l
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        volumeMounts:
+          - name: device-plugin
+            mountPath: /var/lib/kubelet/device-plugins
+      volumes:
+        - name: device-plugin
+          hostPath:
+            path: /var/lib/kubelet/device-plugins
