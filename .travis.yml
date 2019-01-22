@@ -1,0 +1,6 @@
+language: go
+
+services:
+  - docker
+
+before_install: ./build-docker
