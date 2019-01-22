@@ -11,7 +11,7 @@ COPY . .
 RUN go install -v github.com/mpreu/k8s-device-plugin-v4l2loopback
 
 ## Run stage
-FROM golang:1.10.3-alpine3.8
+FROM golang:1.10.3
 COPY --from=build /go/bin/k8s-device-plugin-v4l2loopback /bin/k8s-device-plugin-v4l2loopback
 
 CMD ["/bin/k8s-device-plugin-v4l2loopback"]
