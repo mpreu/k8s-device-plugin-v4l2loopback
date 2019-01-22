@@ -14,7 +14,7 @@ spec:
     spec:
       priorityClassName: system-node-critical
       containers:
-      - image: matthiaspreu/k8s-device-plugin-v4l2loopback:latest
+      - image: mpreu/k8s-device-plugin-v4l2loopback:latest
         name: k8s-device-plugin-v4l2l
         securityContext:
           allowPrivilegeEscalation: false
