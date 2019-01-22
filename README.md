@@ -1,3 +1,5 @@
+Branch `develop`: [![Build Status](https://travis-ci.org/mpreu/k8s-device-plugin-v4l2loopback.svg?branch=develop)](https://travis-ci.org/mpreu/k8s-device-plugin-v4l2loopback)
+
 # v4l2loopback Device Plugin for Kubernetes
 
 ## Intro
