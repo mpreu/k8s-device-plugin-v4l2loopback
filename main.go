@@ -5,7 +5,7 @@ import (
 	"os"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/matthiaspreu/k8s-device-plugin-v4l2loopback/v4l2l"
+	"github.com/mpreu/k8s-device-plugin-v4l2loopback/v4l2l"
 )
 
 func main() {

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/matthiaspreu/k8s-device-plugin-v4l2loopback/v4l2l"
+	"github.com/mpreu/k8s-device-plugin-v4l2loopback/v4l2l"
 	"google.golang.org/grpc"
 	api "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
 )
