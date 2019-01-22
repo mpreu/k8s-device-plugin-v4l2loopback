@@ -1,8 +1,12 @@
 ## Build stage
 FROM golang:1.10.3 as build
 
+# Install go dep
+RUN go get -u github.com/golang/dep/...
+
 WORKDIR /go/src/github.com/mpreu/k8s-device-plugin-v4l2loopback
 COPY . .
+RUN dep ensure
 # Install dependencies if necessary
 #RUN go get github.com/golang/dep/cmd/dep
 #COPY Gopkg.toml Gopkg.lock ./
