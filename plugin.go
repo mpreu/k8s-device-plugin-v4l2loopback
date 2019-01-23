@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net"
+	"os"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -108,11 +109,33 @@ func (plugin *V4l2lDevicePlugin) StartServer() error {
 
 	go plugin.server.Serve(listener)
 
+	// Be sure the connection is established
 	conn, err := checkServerConnection()
 	if err != nil {
 		return err
 	}
 	conn.Close()
+
+	return nil
+}
+
+// StopServer stops the gRPC server of the device plugin
+func (plugin *V4l2lDevicePlugin) StopServer() error {
+	if plugin.server == nil {
+		return nil
+	}
+
+	plugin.server.Stop()
+	plugin.server = nil
+
+	return cleanupSocket()
+}
+
+// CleanupSocket deletes the socket for the device plugin
+func cleanupSocket() error {
+	if err := os.Remove(pluginSocket); err != nil && !os.IsNotExist(err) {
+		return err
+	}
 
 	return nil
 }

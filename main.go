@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"os"
+	"syscall"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/mpreu/k8s-device-plugin-v4l2loopback/v4l2l"
@@ -30,4 +31,25 @@ func main() {
 	}
 
 	log.Debugf("Devices found: %v", devices)
+
+	log.Println("Starting OS signals watcher")
+	sig := newOSSignalWatcher(syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
+	log.Println("Starting device plugin server")
+	devicePlugin := NewV4l2lDevicePlugin()
+
+	err := devicePlugin.StartServer()
+
+	if err != nil {
+		log.Errorf("Plugin server error: %v", err)
+		return
+	}
+
+	for {
+		// Wait for channels
+		select {
+		case <-sig:
+			devicePlugin.StopServer()
+		}
+	}
 }
