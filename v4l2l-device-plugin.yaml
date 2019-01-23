@@ -15,15 +15,25 @@ spec:
       priorityClassName: system-node-critical
       containers:
       - image: mpreu/k8s-device-plugin-v4l2loopback:latest
+        args: ["-log-level", "debug"]
+        imagePullPolicy: IfNotPresent
         name: k8s-device-plugin-v4l2l
         securityContext:
-          allowPrivilegeEscalation: false
+          privileged: true
           capabilities:
             drop: ["ALL"]
+        resources:
         volumeMounts:
+          - name: dev
+            mountPath: /dev
           - name: device-plugin
             mountPath: /var/lib/kubelet/device-plugins
       volumes:
+        - name: dev
+          hostPath:
+            path: /dev
         - name: device-plugin
           hostPath:
             path: /var/lib/kubelet/device-plugins
+  updateStrategy:
+    type: RollingUpdate
