@@ -18,4 +18,4 @@ RUN go install -v github.com/mpreu/k8s-device-plugin-v4l2loopback
 FROM golang:1.10.3
 COPY --from=build /go/bin/k8s-device-plugin-v4l2loopback /bin/k8s-device-plugin-v4l2loopback
 
-CMD ["/bin/k8s-device-plugin-v4l2loopback"]
+ENTRYPOINT ["/bin/k8s-device-plugin-v4l2loopback"]
