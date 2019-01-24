@@ -15,15 +15,17 @@ import (
 const (
 	// pluginSocket describes the local path to the socket file on the system.
 	pluginSocket = api.DevicePluginPath + "v4l2l.sock"
+	resourceName = "mpreu/v4l2l"
 )
 
 // V4l2lDevicePlugin is the type which implements the Kubernetes
 // device plugin interface.
 type V4l2lDevicePlugin struct {
-	socketName string
-	deviceMap  map[string]v4l2l.Device
-	devices    []*api.Device
-	server     *grpc.Server
+	resourceName string
+	socketName   string
+	deviceMap    map[string]v4l2l.Device
+	devices      []*api.Device
+	server       *grpc.Server
 }
 
 // NewV4l2lDevicePlugin constructs a V4l2lDevicePlugin
@@ -42,9 +44,10 @@ func NewV4l2lDevicePlugin() *V4l2lDevicePlugin {
 	}
 
 	return &V4l2lDevicePlugin{
-		deviceMap:  devMap,
-		devices:    devices,
-		socketName: pluginSocket,
+		resourceName: resourceName,
+		socketName:   pluginSocket,
+		deviceMap:    devMap,
+		devices:      devices,
 	}
 }
 
