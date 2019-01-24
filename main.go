@@ -8,6 +8,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/fsnotify/fsnotify"
 	"github.com/mpreu/k8s-device-plugin-v4l2loopback/v4l2l"
+	api "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
 )
 
 func main() {
@@ -37,7 +38,7 @@ func main() {
 	sig := newOSSignalWatcher(syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
 	log.Println("Starting filesystem event watcher")
-	watcher, err := newFSWatcher(pluginSocket)
+	watcher, err := newFSWatcher(api.DevicePluginPath)
 
 	if err != nil {
 		log.Errorf("Could not create filesystem watcher: %v", err)
@@ -64,8 +65,8 @@ func main() {
 			devicePlugin.StopServer()
 		// Filesystem events
 		case event := <-watcher.Events:
-			if event.Name == pluginSocket && event.Op&fsnotify.Create == fsnotify.Create {
-				log.Infof("fsnotify: %s created", pluginSocket)
+			if event.Name == api.KubeletSocket && event.Op&fsnotify.Create == fsnotify.Create {
+				log.Infof("fsnotify: %s created", api.KubeletSocket)
 				devicePlugin := NewV4l2lDevicePlugin()
 				err = devicePlugin.StartServer()
 
@@ -74,7 +75,7 @@ func main() {
 					return
 				}
 			}
-			if event.Name == pluginSocket && event.Op&fsnotify.Remove == fsnotify.Remove {
+			if event.Name == api.KubeletSocket && event.Op&fsnotify.Remove == fsnotify.Remove {
 				log.Infof("fsnotify: %s removed", pluginSocket)
 				devicePlugin.StopServer()
 			}
