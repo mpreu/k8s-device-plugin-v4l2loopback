@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"os"
+	"path"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -57,6 +58,34 @@ func (plugin *V4l2lDevicePlugin) GetDevicePluginOptions(context.Context, *api.Em
 	return &api.DevicePluginOptions{
 		PreStartRequired: false,
 	}, nil
+}
+
+// Register registers the device plugin with the given resource name with the Kubelet.
+func (plugin *V4l2lDevicePlugin) Register(kubeletEndpoint string, resourceName string) error {
+
+	conn, err := checkServerConnection(kubeletEndpoint)
+	if err != nil {
+		log.Errorf("Cannot establish connection to Kubelet endpoint: %v", err)
+		return err
+	}
+	defer conn.Close()
+
+	client := api.NewRegistrationClient(conn)
+
+	request := &api.RegisterRequest{
+		Version:      api.Version,
+		Endpoint:     path.Base(pluginSocket),
+		ResourceName: plugin.resourceName,
+	}
+
+	_, err = client.Register(context.Background(), request)
+	if err != nil {
+		log.Errorf("Sending plugin register request failed: %v", err)
+		return err
+	}
+
+	return nil
+
 }
 
 // ListAndWatch communicates changes of device states and returns a
@@ -113,7 +142,7 @@ func (plugin *V4l2lDevicePlugin) StartServer() error {
 	go plugin.server.Serve(listener)
 
 	// Be sure the connection is established
-	conn, err := checkServerConnection()
+	conn, err := checkServerConnection(pluginSocket)
 	if err != nil {
 		return err
 	}
@@ -122,7 +151,7 @@ func (plugin *V4l2lDevicePlugin) StartServer() error {
 	return nil
 }
 
-// StopServer stops the gRPC server of the device plugin
+// StopServer stops the gRPC server of the device plugin.
 func (plugin *V4l2lDevicePlugin) StopServer() error {
 	if plugin.server == nil {
 		return nil
@@ -132,6 +161,28 @@ func (plugin *V4l2lDevicePlugin) StopServer() error {
 	plugin.server = nil
 
 	return cleanupSocket()
+}
+
+// Serve starts the gRPC server and registers the device plugin to the Kubelet.
+func (plugin *V4l2lDevicePlugin) Serve() error {
+	err := plugin.StartServer()
+	if err != nil {
+		log.Errorf("Could not start device plugin gRPC server: %v", err)
+		return err
+	}
+
+	log.Debugln("Start registering plugin to Kubelet")
+
+	err = plugin.Register(api.KubeletSocket, plugin.resourceName)
+	if err != nil {
+		log.Errorf("Could not register device plugin to Kubelet: %s", err)
+		plugin.StopServer()
+		return err
+	}
+
+	log.Debugln("Registered device plugin to Kubelet")
+
+	return nil
 }
 
 // CleanupSocket deletes the socket for the device plugin
@@ -174,10 +225,10 @@ func createDeviceSpecs(plugin *V4l2lDevicePlugin, request *api.ContainerAllocate
 // checkServerConnection tests the gRPC server of the device plugin.
 // If no connection to the corresponding unix socket can be established
 // it is considered as an error.
-func checkServerConnection() (*grpc.ClientConn, error) {
+func checkServerConnection(endpoint string) (*grpc.ClientConn, error) {
 	timeout := 5 * time.Second
 
-	c, err := grpc.Dial(pluginSocket,
+	c, err := grpc.Dial(endpoint,
 		grpc.WithInsecure(),
 		grpc.WithTimeout(timeout),
 		grpc.WithBlock(),

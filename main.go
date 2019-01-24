@@ -50,7 +50,7 @@ func main() {
 	log.Println("Starting device plugin server")
 	devicePlugin := NewV4l2lDevicePlugin()
 
-	err = devicePlugin.StartServer()
+	err = devicePlugin.Serve()
 
 	if err != nil {
 		log.Errorf("Plugin server error: %v", err)
@@ -61,14 +61,15 @@ func main() {
 		// Wait for channels
 		select {
 		// Termination signals
-		case <-sig:
+		case s := <-sig:
+			log.Debugf("Termination signal received: %v", s)
 			devicePlugin.StopServer()
 		// Filesystem events
 		case event := <-watcher.Events:
 			if event.Name == api.KubeletSocket && event.Op&fsnotify.Create == fsnotify.Create {
 				log.Infof("fsnotify: %s created", api.KubeletSocket)
 				devicePlugin := NewV4l2lDevicePlugin()
-				err = devicePlugin.StartServer()
+				err = devicePlugin.Serve()
 
 				if err != nil {
 					log.Errorf("Plugin server error: %v", err)
