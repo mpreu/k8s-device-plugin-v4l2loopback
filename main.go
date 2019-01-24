@@ -6,6 +6,7 @@ import (
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/fsnotify/fsnotify"
 	"github.com/mpreu/k8s-device-plugin-v4l2loopback/v4l2l"
 )
 
@@ -35,10 +36,20 @@ func main() {
 	log.Println("Starting OS signals watcher")
 	sig := newOSSignalWatcher(syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
+	log.Println("Starting filesystem event watcher")
+	watcher, err := newFSWatcher(pluginSocket)
+
+	if err != nil {
+		log.Errorf("Could not create filesystem watcher: %v", err)
+		return
+	}
+
+	defer watcher.Close()
+
 	log.Println("Starting device plugin server")
 	devicePlugin := NewV4l2lDevicePlugin()
 
-	err := devicePlugin.StartServer()
+	err = devicePlugin.StartServer()
 
 	if err != nil {
 		log.Errorf("Plugin server error: %v", err)
@@ -48,8 +59,26 @@ func main() {
 	for {
 		// Wait for channels
 		select {
+		// Termination signals
 		case <-sig:
 			devicePlugin.StopServer()
+		// Filesystem events
+		case event := <-watcher.Events:
+			if event.Name == pluginSocket && event.Op&fsnotify.Create == fsnotify.Create {
+				log.Infof("fsnotify: %s created", pluginSocket)
+				devicePlugin := NewV4l2lDevicePlugin()
+				err = devicePlugin.StartServer()
+
+				if err != nil {
+					log.Errorf("Plugin server error: %v", err)
+					return
+				}
+			}
+			if event.Name == pluginSocket && event.Op&fsnotify.Remove == fsnotify.Remove {
+				log.Infof("fsnotify: %s removed", pluginSocket)
+				devicePlugin.StopServer()
+			}
+
 		}
 	}
 }
