@@ -16,7 +16,7 @@ import (
 const (
 	// pluginSocket describes the local path to the socket file on the system.
 	pluginSocket = api.DevicePluginPath + "v4l2l.sock"
-	resourceName = "mpreu/v4l2l"
+	resourceName = "mpreu.de/v4l2l"
 )
 
 // V4l2lDevicePlugin is the type which implements the Kubernetes
@@ -63,6 +63,8 @@ func (plugin *V4l2lDevicePlugin) GetDevicePluginOptions(context.Context, *api.Em
 // Register registers the device plugin with the given resource name with the Kubelet.
 func (plugin *V4l2lDevicePlugin) Register(kubeletEndpoint string, resourceName string) error {
 
+	log.Debugln("Entering register function")
+
 	conn, err := checkServerConnection(kubeletEndpoint)
 	if err != nil {
 		log.Errorf("Cannot establish connection to Kubelet endpoint: %v", err)
@@ -78,6 +80,8 @@ func (plugin *V4l2lDevicePlugin) Register(kubeletEndpoint string, resourceName s
 		ResourceName: plugin.resourceName,
 	}
 
+	log.Debugf("RegisterRequest: %v", request)
+
 	_, err = client.Register(context.Background(), request)
 	if err != nil {
 		log.Errorf("Sending plugin register request failed: %v", err)
@@ -91,10 +95,20 @@ func (plugin *V4l2lDevicePlugin) Register(kubeletEndpoint string, resourceName s
 // ListAndWatch communicates changes of device states and returns a
 // new device list. Implementation of the 'DevicePluginServer' interface.
 func (plugin *V4l2lDevicePlugin) ListAndWatch(e *api.Empty, s api.DevicePlugin_ListAndWatchServer) error {
+	log.Debugf("ListAndWatch devices: %v", plugin.devices)
 	response := api.ListAndWatchResponse{
 		Devices: plugin.devices,
 	}
-	s.Send(&response)
+	err := s.Send(&response)
+
+	if err != nil {
+		log.Errorf("Error when sending ListAndWatch response: %v", err)
+		return err
+	}
+
+	for {
+		select {}
+	}
 
 	return nil
 }
