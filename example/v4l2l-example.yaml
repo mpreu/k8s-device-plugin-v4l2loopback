@@ -6,5 +6,8 @@ spec:
   containers:
   - name: k8s-device-plugin-v4l2l-pod-example
     image: alpine:latest
+    resources:
+      limits:
+        mpreu.de/v4l2l: 1
     workingDir: /dev
     command: ["/bin/sh", "-c", "ls"]
