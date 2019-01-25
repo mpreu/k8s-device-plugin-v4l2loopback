@@ -24,14 +24,14 @@ spec:
             drop: ["ALL"]
         resources:
         volumeMounts:
-          - name: dev
-            mountPath: /dev
+          # - name: dev
+          #   mountPath: /dev
           - name: device-plugin
             mountPath: /var/lib/kubelet/device-plugins
       volumes:
-        - name: dev
-          hostPath:
-            path: /dev
+        # - name: dev
+        #   hostPath:
+        #     path: /dev
         - name: device-plugin
           hostPath:
             path: /var/lib/kubelet/device-plugins
