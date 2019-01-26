@@ -109,8 +109,6 @@ func (plugin *V4l2lDevicePlugin) ListAndWatch(e *api.Empty, s api.DevicePlugin_L
 	for {
 		select {}
 	}
-
-	return nil
 }
 
 // Allocate is resposible to make the device available during the
@@ -121,18 +119,22 @@ func (plugin *V4l2lDevicePlugin) Allocate(ctx context.Context, request *api.Allo
 
 	responses := make([]*api.ContainerAllocateResponse, len(request.GetContainerRequests()))
 
-	for _, ctnRequest := range request.GetContainerRequests() {
+	for i, ctnRequest := range request.GetContainerRequests() {
 		specs := createDeviceSpecs(plugin, ctnRequest)
 
-		response := &api.ContainerAllocateResponse{
+		r := &api.ContainerAllocateResponse{
 			Devices: specs,
 		}
-		responses = append(responses, response)
+		responses[i] = r
 	}
 
-	return &api.AllocateResponse{
+	response := api.AllocateResponse{
 		ContainerResponses: responses,
-	}, nil
+	}
+
+	log.Debugf("Allocate response: %v", response)
+
+	return &response, nil
 }
 
 // PreStartContainer is called during registration phase of a container.
@@ -231,8 +233,8 @@ func createDeviceSpecs(plugin *V4l2lDevicePlugin, request *api.ContainerAllocate
 		currentDevice := plugin.deviceMap[deviceID]
 		ds := createDeviceSpec(&currentDevice)
 		specs = append(specs, ds)
-	}
 
+	}
 	return specs
 }
 
