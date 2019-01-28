@@ -1,0 +1,6 @@
+language: minimal
+
+services:
+  - docker
+
+script: ./build-docker

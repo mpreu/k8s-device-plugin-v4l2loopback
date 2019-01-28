@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: k8s-device-plugin-v4l2l
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      name: k8s-device-plugin-v4l2l
+  template:
+    metadata:
+      labels:
+        name: k8s-device-plugin-v4l2l
+    spec:
+      priorityClassName: system-node-critical
+      containers:
+      - image: mpreu/k8s-device-plugin-v4l2loopback:latest
+        args: ["-log-level", "debug"]
+        imagePullPolicy: IfNotPresent
+        name: k8s-device-plugin-v4l2l
+        securityContext:
+          privileged: true
+          capabilities:
+            drop: ["ALL"]
+        resources:
+        volumeMounts:
+          # - name: dev
+          #   mountPath: /dev
+          - name: device-plugin
+            mountPath: /var/lib/kubelet/device-plugins
+      volumes:
+        # - name: dev
+        #   hostPath:
+        #     path: /dev
+        - name: device-plugin
+          hostPath:
+            path: /var/lib/kubelet/device-plugins
+  updateStrategy:
+    type: RollingUpdate
